@@ -1,0 +1,48 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 1
+
+- name: "Check Required variables are defined"
+  ansible.builtin.assert:
+    that:
+      - cloud_element.group_name | length > 0
+      # - local_tags is defined
+      - cloud_element.settings.vnet_name is defined
+    success_msg: All Required variables for this role are defined
+    fail_msg: Missing Required variables 
+
+
+- name: List Subnets
+  ansible.builtin.debug:
+    var: item
+  loop: "{{ cloud_element.settings.subnets }}"
+# - name: App Service Plan
+#   include_tasks: "{{ role_path }}/tasks/app_service_{{ cloud_element.settings.worker_type | default('linux',true) }}.yml" 
+
+- name: Create Subnetes 
+  ansible.builtin.command: >
+    az network vnet subnet create
+    --name={{ item.name }}
+    --address-prefixes={{ item.subnet_prefix }}
+    --resource-group="{{ cloud_element.group_name }}"
+    --vnet-name="{{ cloud_element.settings.vnet_name }}"
+  loop: "{{ cloud_element.settings.subnets }}"
+# - name: azure_app_service_item
+#   ansible.builtin.debug:
+#     var: azure_app_service_item.stdout
+
+# - name: Set Fact - azure_app_service_item
+#   ansible.builtin.set_fact:
+#     azure_app_service: "{{ azure_app_service_item.stdout }}"
+
+# - name: Set result
+#   ansible.builtin.set_fact:
+#     cacheable: true
+#     "{{ ansible_facts_output_var | mandatory }}": "{{ azure_app_service }}"
+  

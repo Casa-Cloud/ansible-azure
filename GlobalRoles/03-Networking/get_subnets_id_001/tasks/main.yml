@@ -1,0 +1,38 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 1
+
+- name: "Check Required variables are defined"
+  ansible.builtin.assert:
+    that:
+      # - cloud_element.group_name | length > 0
+      - vnet_name is defined
+      - subnet_name is defined
+      - resource_group is defined
+    success_msg: All Required variables for this role are defined
+    fail_msg: Missing Required variables 
+
+- name: Get Subnet ID
+  ansible.builtin.command: >
+    az network vnet subnet show \
+    --name {{ subnet_name }} \
+    --resource-group {{ resource_group }} \
+    --vnet-name {{ vnet_name }} \
+    --query id -o tsv
+  register: subnetId
+
+- name: Print subnet1
+  ansible.builtin.debug:
+    msg: subnet1 - {{ subnetId.stdout }}
+
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ subnetId.stdout }}"
+    # "{{ ansible_facts_output_var | mandatory }}": ""

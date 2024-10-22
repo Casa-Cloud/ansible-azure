@@ -1,0 +1,75 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role new. 
+
+- name: cloud_element
+  ansible.builtin.debug:
+    var: cloud_element
+
+- name: role_path
+  ansible.builtin.debug:
+    var: role_path
+
+- name: Assert mandatory variables in clound_element
+  ansible.builtin.assert:
+    that:
+    - cloud_element.name is defined
+    - cloud_element.group_name is defined
+    - cloud_element.tags is defined
+    - cloud_element.tenant_id is defined
+    - cloud_element.admin_group_object_id is defined
+    - cloud_element.location is defined
+    - cloud_element.node_count is defined
+    - cloud_element.node_resource_group_name is defined
+    - cloud_element.node_vm_size is defined
+    - cloud_element.nodepool_name is defined
+    - cloud_element.vnet_subnet_id is defined
+    - cloud_element.log_workspace_resource_id is defined
+    - cloud_element.data_collection_settings is defined
+    # - cloud_element.monitor_workspace_resource_id is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Create AKS
+  ansible.builtin.command: >
+    az aks create \
+    --name {{ cloud_element.name }} \
+    --resource-group {{ cloud_element.group_name }} \
+    --aad-tenant-id {{ cloud_element.tenant_id }} \
+    --aad-admin-group-object-ids {{ cloud_element.admin_group_object_id }} \
+    --enable-aad \
+    --enable-azure-rbac \
+    --location {{ cloud_element.location }} \
+    --network-plugin kubenet \
+    --network-policy "none" \
+    --node-count {{ cloud_element.node_count }} \
+    --node-resource-group {{ cloud_element.node_resource_group_name }} \
+    --node-vm-size {{ cloud_element.node_vm_size }} \
+    --nodepool-name {{ cloud_element.nodepool_name }} \
+    --vnet-subnet-id {{ cloud_element.vnet_subnet_id }} \
+    --workspace-resource-id {{ cloud_element.log_workspace_resource_id }} \
+    --enable-addons monitoring \
+    --disable-local-accounts \
+    --data-collection-settings {{ role_path }}/files{{ cloud_element.data_collection_settings }}
+    
+  register: aks_created
+  # --data-collection-settings {{ role_path }}/files{{ cloud_element.data_collection_settings }}
+  # --azure-monitor-workspace-resource-id {{ cloud_element.monitor_workspace_resource }} \ this is imp. as grafan is not working hence not adding this for now
+  # --enable-ama-monitoring \
+
+
+- name: Print aks_created
+  ansible.builtin.debug:
+    msg: aks_created - {{ aks_created }}
+
+- name: Set result 
+  ansible.builtin.set_fact:
+    cacheable: true
+    aks_created: "{{ aks_created.stdout | from_json  | default('')}}"
+    

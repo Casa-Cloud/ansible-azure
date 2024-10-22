@@ -1,0 +1,43 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+# - name: Print rg_name
+#   ansible.builtin.debug:
+#     msg: rg_name - {{ rg_name }}
+# - name: Print location
+#   ansible.builtin.debug:
+#     msg: location - {{ location }}
+# - name: Print tags
+#   ansible.builtin.debug:
+#     msg: tags - {{ tags }}
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.name is defined
+    - cloud_element.group_name is defined
+    - cloud_element.tags is defined
+    - cloud_element.location is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Create Log Analytics Workspace
+  ansible.builtin.command: >
+    az monitor log-analytics workspace create
+    --resource-group {{ cloud_element.group_name }}
+    --workspace-name {{ cloud_element.name }}
+    --location  {{ cloud_element.location }}
+    --tags={{ local_tags.items() |map('join', '=') | map('regex_replace', '[ <>:\+_/;&"\?\\]', '_') |join(' ') }}
+  register: logWorkspaceCreated
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ logWorkspaceCreated }}"

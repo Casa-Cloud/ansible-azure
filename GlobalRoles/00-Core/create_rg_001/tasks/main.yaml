@@ -1,0 +1,39 @@
+---
+
+- name: Print rg_name
+  ansible.builtin.debug:
+    msg: rg_name - {{ rg_name }}
+- name: Print location
+  ansible.builtin.debug:
+    msg: location - {{ location }}
+- name: Print tags
+  ansible.builtin.debug:
+    msg: tags - {{ tags }}
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - rg_name is defined
+    - location is defined
+    - tags is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+
+- name: Create Resource Group
+  ansible.builtin.command: >
+    az group create 
+    --name={{ rg_name }}
+    --location={{ location }}
+    --tags={{ local_tags.items() |map('join', '=') | map('regex_replace', '[ <>:\+_/;&"\?\\]', '_') |join(' ') }}
+  register: rg_created
+
+- name: Print rg_created
+  ansible.builtin.debug:
+    msg: rg_created - {{ rg_created }}
+
+- name: Set result 
+  ansible.builtin.set_fact:
+    cacheable: true
+    rg_created: "{{ rg_created.stdout | from_json  | default('')}}"
+    

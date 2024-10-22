@@ -1,0 +1,55 @@
+---
+# - name: Check if not ligin in the current tenant or subscription
+#   ansible.builtin.command: > 
+#     az account list --query "[?contains(@.id, '{{ subscription_id }}')==true]"
+#     az account list --query "[?contains(@.id, '6e33e6b2-3481-4b26-b509-d218fa37ee85')==true].{Id:id,tenant_id:tenant_id,IsDefault:isDefault}"
+    
+
+#     az account list --query "[].id"
+
+#     az account list --query "[?id=='6e33e6b2-3481-4b26-b509-d218fa37ee85'].id"
+# [
+#   "6e33e6b2-3481-4b26-b509-d218fa37ee85"
+# ]
+
+
+- name: Print spn_username
+  ansible.builtin.debug:
+    msg: spn_username - {{ spn_username }}
+- name: Print spn_username
+  ansible.builtin.debug:
+    msg: tenant_id - {{ tenant_id }}
+- name: Print spn_username
+  ansible.builtin.debug:
+    msg: tenant_id - {{ lookup('env', 'SPN_ALOKAPP5_PASSWORD') }}
+- name: Print spn_username
+  ansible.builtin.debug:
+    msg: tenant_id - {{ lookup('env', 'SPN_ALOKAPP5_PASSWORD') == ""}} 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - spn_username is defined
+    - tenant_id is defined
+    - lookup('env', 'SPN_ALOKAPP5_PASSWORD') != ""
+    success_msg: All mandatory variables for azure login are defined
+    fail_msg: Missing mandatory variable(s) to execute azure login
+
+- name: Login to Azure
+  ansible.builtin.command: >
+    az login
+    --service-principal
+    --username={{ spn_username }}
+    --password="{{ lookup('env', 'SPN_ALOKAPP5_PASSWORD')}}"
+    --tenant {{ tenant_id }}
+  register: azure_login_result
+
+- name: Print azure_login_result
+  ansible.builtin.debug:
+    msg: azure_login_result - {{ azure_login_result.stdout | from_json }}
+
+- name: Set result 
+  ansible.builtin.set_fact:
+    cacheable: true
+    azure_login_result: "{{ azure_login_result.stdout | from_json  | default('')}}"
+    

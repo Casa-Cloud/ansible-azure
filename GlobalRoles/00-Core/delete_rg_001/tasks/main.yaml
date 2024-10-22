@@ -1,0 +1,59 @@
+---
+
+- name: Print rg_name
+  ansible.builtin.debug:
+    msg: rg_name - {{ rg_name }}
+- name: Print subscription
+  ansible.builtin.debug:
+    msg: subscription - {{ subscription }}
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - rg_name is defined
+    - subscription is defined
+    success_msg: All mandatory variables for this role
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: List Resource Group
+  ansible.builtin.command: >
+    az group list 
+    --query="[?name=='{{ rg_name }}']"
+  register: rg_details_if_exists 
+- name: set rg_details_if_exists
+  ansible.builtin.set_fact:
+    cacheable: true
+    rg_details_if_exists_fact: "{{ rg_details_if_exists.stdout | from_json | default('')}}"
+
+- name: Print rg_details_if_exists_fact
+  ansible.builtin.debug:
+    msg: rg_details_if_exists_fact - {{ rg_details_if_exists_fact }}
+
+- name: Print rg_details_if_exists_fact
+  ansible.builtin.debug:
+    msg: rg_details_if_exists_fact - {{ rg_details_if_exists_fact | length}}
+
+- name: Delete Resource Group
+  ansible.builtin.command: >
+    az group delete 
+    --name={{ rg_name }}
+    --subscription={{ subscription }}
+    --yes
+  register: rg_deleted
+  when:
+    - rg_details_if_exists_fact | length > 0
+
+- name: Print rg_deleted
+  ansible.builtin.debug:
+    msg: rg_deleted - {{ rg_deleted }}
+  when:
+    - rg_details_if_exists_fact | length > 0
+
+- name: set rg_deleted
+  ansible.builtin.set_fact:
+    cacheable: true
+    rg_deleted: "{{ rg_deleted.changed | default('')}}"
+  when:
+    - rg_details_if_exists_fact | length > 0
+
+    

@@ -1,0 +1,113 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+# - name: Print rg_name
+#   ansible.builtin.debug:
+#     msg: rg_name - {{ rg_name }}
+# - name: Print location
+#   ansible.builtin.debug:
+#     msg: location - {{ location }}
+# - name: Print tags
+#   ansible.builtin.debug:
+#     msg: tags - {{ tags }}
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.name is defined
+    - cloud_element.group_name is defined
+    - cloud_element.tags is defined
+    - cloud_element.location is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+
+
+
+- name: Check If Resource Already Exist
+  ansible.builtin.command: >
+    az network vnet show
+    --name={{ cloud_element.name }}
+    --resource-group={{ cloud_element.group_name }}
+  register: resourceExist
+  ignore_errors: true
+  
+- block: # Create Non-Existing Resource
+  - name: Print resourceExist Create Block
+    ansible.builtin.debug:
+      msg: Create Non-Existing Resource
+  - name: Create VNET
+    ansible.builtin.command: >
+      az network vnet create
+      --name={{ cloud_element.name }}
+      --resource-group={{ cloud_element.group_name }}
+      --tags={{ local_tags.items() |map('join', '=') | map('regex_replace', '[ <>:\+_/;&"\?\\]', '_') |join(' ') }}
+      --address-prefixes={{ cloud_element.settings.address_prefixes }}
+    register: vnetCreated
+  when: 
+    - "'was not found' in resourceExist.stderr"
+    - resourceExist.failed==true
+
+
+- block: # Update Existing Resource
+  - name: Print resourceExist Update Block
+    ansible.builtin.debug:
+      msg: "Updating Resource"
+
+  - name: Update VNET
+    ansible.builtin.command: >
+      az network vnet update
+      --name={{ cloud_element.name }}
+      --resource-group={{ cloud_element.group_name }}
+      --address-prefixes={{ cloud_element.settings.address_prefixes }}
+    register: vnetUpdate
+  when: 
+    # - resourceExist is defined
+    # - resourceExist.stdout is defined
+    # - (resourceExist.stdout | from_json).provisioningState =='Succeeded' 
+    - resourceExist.failed==False
+
+# - name: Disable Network Watcher
+#   ansible.builtin.command: >
+#    az network watcher configure 
+#     --resource-group=NetworkWatcherRG
+#     --locations={{ cloud_element.location }} --enabled false
+#   register: disableNetworkWatcher
+
+# - name: Print vnetCreated
+#   ansible.builtin.debug:
+#     msg: vnetCreated - {{ vnetCreated }}
+
+# - name: Set Fact - azure_app_service_item
+#   ansible.builtin.set_fact:
+#     vnet_created: "{{ vnetCreated.stdout }}"
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{vnet_created | default(vnetUpdate, true) }}"
+# Explanation:
+# vnet_created | default(vnetUpdate, true):
+# This line checks if vnet_created is defined. If it is, its value will be used.
+# If vnet_created is not defined, the default filter will use vnetUpdate.
+# If neither vnet_created nor vnetUpdate is defined, the third argument (true) will be used as a fallback value.
+# Example for Clarity:
+# Suppose you have the following variables:
+
+# yaml
+# Copy code
+# vnet_created: undefined  # Not defined
+# vnetUpdate: "Updated"    # Defined
+# The task would set the fact based on vnetUpdate:
+
+# yaml
+# Copy code
+# ansible_facts_output_var: "Updated"
+# If vnet_created is defined, its value will take precedence.

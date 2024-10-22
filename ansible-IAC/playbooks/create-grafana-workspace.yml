@@ -1,0 +1,64 @@
+---
+
+- name: Create Azure Monitor Workspace
+  hosts: all 
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+
+    - name: Print globalvariables
+      ansible.builtin.debug:
+        msg: globalvariables - {{ globalvariables }}
+    - name: Print regionalVariables
+      ansible.builtin.debug:
+        msg: regionalVariables - {{ regionalVariables }}
+    
+    - name: Login to Azure
+      ansible.builtin.import_role:
+        name: login_azure_sp_cert_01
+      vars: 
+        spn_appID: "{{ identities.spn.app01.appid }}"
+        tenant_id: "{{ globalvariables.tenant_id }}"
+        certificate: "{{ identities.spn.app01.certificateName }}"
+        certificatePath: "{{ playbook_dir }}/../certificate"
+
+    - name: Create Resource Group
+      ansible.builtin.import_role:
+        name: create_rg_001
+      vars: 
+        rg_name: "{{ resourcegroup.resource_group_1.name }}"
+        location: "{{ regionalVariables.location }}"
+        tags: "{{ regionalVariables.tags }}"
+
+    - name: Create Grafana workspace
+      ansible.builtin.import_role:
+        name: create_grafana_workspace_001
+      vars:
+        cloud_element:
+          name: "{{ grafana_workspaces.grafana_workspace_1.name }}"
+          group_name: "{{ resourcegroup.resource_group_1.name }}"
+          tags: "{{ regionalVariables.tags }}"
+          location: "{{ regionalVariables.location }}"
+          sku_tier: "{{ grafana_workspaces.grafana_workspace_1.sku_tier }}"
+          publicnetworkaccess: "{{ grafana_workspaces.grafana_workspace_1.publicnetworkaccess }}"
+        ansible_facts_output_var: "grafana_workspace_1_out"
+
+    - name: ansible_facts.grafana_workspace_1_out
+      ansible.builtin.debug:
+        var: ansible_facts.grafana_workspace_1_out
+
+    - name: Get Grafana Workspace ID
+      ansible.builtin.import_role:
+        name: get_grafana_workspace_id_001
+      vars:
+        cloud_element:
+          name: "{{ grafana_workspaces.grafana_workspace_1.name }}"
+          group_name: "{{ resourcegroup.resource_group_1.name }}"
+        ansible_facts_output_var: "grafana_workspace_id"
+
+    - name: ansible_facts.grafana_workspace_id
+      ansible.builtin.debug:
+        var: ansible_facts.grafana_workspace_id

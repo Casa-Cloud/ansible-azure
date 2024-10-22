@@ -1,0 +1,1 @@
+local_tags:  "{{ cloud_element.tags }}"

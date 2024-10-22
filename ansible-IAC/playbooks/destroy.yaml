@@ -1,0 +1,43 @@
+- name: provision_website
+  hosts: all 
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+    
+    # - name: Login to Azure
+    #   ansible.builtin.import_role:
+    #     name: login_azure_001
+    #   vars: 
+    #     spn_username: "{{ regionalVariables.identities.spn.alokapplication5.username }}"
+    #     tenant_id: "{{ globalvariables.tenant_id }}"
+
+    
+    - name: Login to Azure
+      ansible.builtin.import_role:
+        name: login_azure_sp_cert_01
+      vars: 
+        spn_appID: "{{ identities.spn.app01.appid }}"
+        tenant_id: "{{ globalvariables.tenant_id }}"
+        certificate: "{{ identities.spn.app01.certificateName }}"
+        certificatePath: "{{ playbook_dir }}/../certificate"
+    
+    - name: Delete Resource Group
+      ansible.builtin.import_role:
+        name: delete_rg_001
+      vars: 
+        rg_name: "{{ resourcegroup.resource_group_1.name }}"
+        subscription: "{{regionalVariables.subscription_id}}"
+
+    - name: Delete NetworkRG resource group
+      ansible.builtin.import_role:
+        name: delete_rg_001
+      vars: 
+        rg_name: "NetworkWatcherRG"
+        subscription: "{{regionalVariables.subscription_id}}"
+    
+    - name: ansible_facts.rg_deleted
+      ansible.builtin.debug:
+        var: ansible_facts.rg_deleted
