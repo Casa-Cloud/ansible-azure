@@ -1,0 +1,211 @@
+---
+
+- name: Create AKS
+  hosts: all
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+
+    - name: Print globalvariables
+      ansible.builtin.debug:
+        msg: globalvariables - {{ globalvariables }}
+    - name: Print regionalVariables
+      ansible.builtin.debug:
+        msg: regionalVariables - {{ regionalVariables }}
+    
+    - name: Login to Azure
+      ansible.builtin.import_role:
+        name: login_azure_sp_cert_01
+      vars: 
+        spn_appID: "{{ identities.spn.app01.appid }}"
+        tenant_id: "{{ globalvariables.tenant_id }}"
+        certificate: "{{ identities.spn.app01.certificateName }}"
+        certificatePath: "{{ playbook_dir }}/../certificate"
+
+    - name: Print subnet1
+      ansible.builtin.debug:
+        msg: subnet1 - {{ subnet_vnet_1.settings.subnets[0].name }}
+
+    - name: Get Subnet ID
+      ansible.builtin.import_role:
+        name: get_subnets_id_001
+      vars:
+        vnet_name: "{{ vnet.vnet_1.name }}"
+        subnet_name: "{{ subnet_vnet_1.settings.subnets[0].name }}"
+        resource_group: "{{ resourcegroup.resource_group_1.name }}"
+        ansible_facts_output_var: "subnet_1_id"
+    
+    - name: ansible_facts
+      ansible.builtin.debug:
+        var: ansible_facts.subnet_1_id
+
+    - name: ansible_facts inside block
+      ansible.builtin.debug:
+        var: ansible_facts.subnet_1_id
+      failed_when: ansible_facts['subnet_1_id'] is not defined or
+                   ansible_facts['subnet_1_id'] is none or
+                   ansible_facts['subnet_1_id'] == ""
+
+    - name: Get Log Analytics Workspace ID
+      ansible.builtin.import_role:
+        name: get_log_workspace_id_001
+      vars:
+        cloud_element:
+          name: "{{ log_workspace.log_workspace_1.name }}"
+          group_name: "{{ resourcegroup.resource_group_1.name }}"
+        ansible_facts_output_var: "log_workspace_id"
+
+    - name: ansible_facts.log_workspace_id
+      ansible.builtin.debug:
+        var: ansible_facts.log_workspace_id
+
+    - name: ansible_facts inside block
+      ansible.builtin.debug:
+        var: ansible_facts.log_workspace_id
+      failed_when: ansible_facts['log_workspace_id'] is not defined or
+                   ansible_facts['log_workspace_id'] is none or
+                   ansible_facts['log_workspace_id'] == ""
+
+    - name: Get Monitor Workspace ID
+      ansible.builtin.import_role:
+        name: get_monitor_workspace_id_001
+      vars:
+        cloud_element:
+          name: "{{ monitor_workspace.monitor_workspace_1.name }}"
+          group_name: "{{ resourcegroup.resource_group_1.name }}"
+        ansible_facts_output_var: "monitor_workspace_id"
+      when: Monitor_Workspace is defined and Monitor_Workspace == true
+
+    - name: ansible_facts.monitor_workspace_id
+      ansible.builtin.debug:
+        var: ansible_facts.monitor_workspace_id
+      failed_when: ansible_facts['monitor_workspace_id'] is not defined or
+                   ansible_facts['monitor_workspace_id'] is none or
+                   ansible_facts['monitor_workspace_id'] == ""
+      when: Monitor_Workspace is defined and Monitor_Workspace == true
+
+    - name: Set aks_data_collection_setting fact
+      ansible.builtin.set_fact:
+        aks_data_collection_setting: >-
+          {{
+            dict(
+              interval='5m',
+              namespaceFilteringMode='Exclude',
+              namespaces=['kube-system', 'gatekeeper-system', 'azure-arc'],
+              enableContainerLogV2=true,
+              streams=['Microsoft-Perf', 'Microsoft-ContainerLogV2']
+            )
+          }}
+
+    - name: aks_cloud_element
+      ansible.builtin.debug:
+        var: role_path
+
+    - name: Set cloud_element fact with optional monitor_workspace_resource_id
+      ansible.builtin.set_fact:
+        aks_cloud_element: >-
+          {{
+            dict(
+              name=aks_1.name,
+              group_name=resourcegroup.resource_group_1.name,
+              tenant_id=globalvariables.tenant_id,
+              tags=regionalVariables.tags,
+              admin_group_object_id=aks_1.admin_group_object_id,
+              location=regionalVariables.location,
+              node_count=aks_1.node_count,
+              node_resource_group_name=aks_1.node_resource_group_name,
+              node_vm_size=aks_1.node_vm_size,
+              nodepool_name=aks_1.nodepool_name,
+              vnet_subnet_id=ansible_facts['subnet_1_id'],
+              log_workspace_resource_id=ansible_facts['log_workspace_id'],
+              data_collection_settings="/data_collection_settings.json",
+              monitor_workspace_resource_id=ansible_facts['monitor_workspace_id'] if (Monitor_Workspace is defined and Monitor_Workspace == true) else omit
+            )
+          }}
+
+    
+    - name: aks_cloud_element
+      ansible.builtin.debug:
+        var: aks_cloud_element
+
+    - name: Pause for 5 seconds before running next playbook
+      ansible.builtin.command:
+        cmd: sleep 30
+
+
+    - name: Create AKS
+      ansible.builtin.import_role:
+        name: create_aks_001
+      vars:
+        cloud_element: "{{ aks_cloud_element }}"
+        ansible_facts_output_var: "aks_1_out"
+
+    # - name: Create AKS
+    #   ansible.builtin.import_role:
+    #     name: create_aks_001
+    #   vars:
+    #     cloud_element:
+    #       name: "{{ aks_1.name }}"
+    #       group_name: "{{ resourcegroup.resource_group_1.name }}"
+    #       tenant_id:  "{{ globalvariables.tenant_id }}"
+    #       tags: "{{ regionalVariables.tags }}"
+    #       admin_group_object_id: "{{ aks_1.admin_group_object_id }}"
+    #       location: "{{ regionalVariables.location }}"
+    #       node_count: "{{ aks_1.node_count }}"
+    #       node_resource_group_name:  "{{ aks_1.node_resource_group_name }}"
+    #       node_vm_size: "{{ aks_1.node_vm_size }}"
+    #       nodepool_name: "{{ aks_1.nodepool_name }}"
+    #       vnet_subnet_id: "{{ ansible_facts['subnet_1_id'] }}"
+    #       log_workspace_resource_id: "{{ ansible_facts['log_workspace_id'] }}"
+    #       # monitor_workspace_resource_id: "{{ ansible_facts['monitor_workspace_id'] }}"
+    #     ansible_facts_output_var: "aks_1_out"
+
+# Below one is better. controled with a variable from inventory file. check that. 
+
+  # - name: Get Monitor Workspace ID
+  #     ansible.builtin.import_role:
+  #       name: get_monitor_workspace_id_001
+  #     vars:
+  #       cloud_element:
+  #         name: "{{ monitor_workspace.monitor_workspace_1.name }}"
+  #         group_name: "{{ resourcegroup.resource_group_1.name }}"
+  #       ansible_facts_output_var: "monitor_workspace_id"
+  #     when: Monitor_Workspace == true
+
+  #   - name: ansible_facts.monitor_workspace_id
+  #     ansible.builtin.debug:
+  #       var: ansible_facts.monitor_workspace_id
+  #     failed_when: ansible_facts['monitor_workspace_id'] is not defined or
+  #                  ansible_facts['monitor_workspace_id'] is none or
+  #                  ansible_facts['monitor_workspace_id'] == ""
+  #     when: Monitor_Workspace == true
+
+  #   - name: Set cloud_element fact with optional monitor_workspace_resource_id
+  #     ansible.builtin.set_fact:
+  #       cloud_element: >
+  #         {{
+  #           dict(
+  #             name=aks_1.name,
+  #             group_name=resourcegroup.resource_group_1.name,
+  #             tenant_id=globalvariables.tenant_id,
+  #             tags=regionalVariables.tags,
+  #             admin_group_object_id=aks_1.admin_group_object_id,
+  #             location=regionalVariables.location,
+  #             node_count=aks_1.node_count,
+  #             node_resource_group_name=aks_1.node_resource_group_name,
+  #             node_vm_size=aks_1.node_vm_size,
+  #             nodepool_name=aks_1.nodepool_name,
+  #             vnet_subnet_id=ansible_facts['subnet_1_id'],
+  #             log_workspace_resource_id=ansible_facts['log_workspace_id'],
+  #             monitor_workspace_resource_id=ansible_facts['monitor_workspace_id'] if ansible_facts['monitor_workspace_id'] is defined else omit
+  #           )
+  #         }}
+  #   - name: Create AKS
+  #     ansible.builtin.import_role:
+  #       name: create_aks_001
+  #     vars:
+  #       cloud_element: "{{ cloud_element }}"
+  #       ansible_facts_output_var: "aks_1_out"

@@ -1,0 +1,46 @@
+---
+
+- name: Print rg_name
+  ansible.builtin.debug:
+    msg: rg_name - {{ rg_name }}
+- name: Print location
+  ansible.builtin.debug:
+    msg: location - {{ location }}
+- name: Print tags
+  ansible.builtin.debug:
+    msg: tags - {{ tags }}
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - rg_name is defined
+    - location is defined
+    - tags is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: role - create_rg_arm_001  - creating parameters JSON
+  template:
+    src: parameter.json.j2
+    dest: "{{ role_path }}/templates/parameter.json"
+    mode: 0755
+
+- name: role - create_rg_arm_001  - deployment RG create
+  shell: >
+    az deployment group create
+    --name "createRG" \
+    --resource-group '{{ rg_name }}'
+    --template-file '{{ role_path }}/templates/template.json'
+    --parameters '{{ role_path }}/templates/parameter.json'
+  register: rg_created
+
+
+- name: Print rg_created
+  ansible.builtin.debug:
+    msg: rg_created - {{ rg_created }}
+
+- name: Set result 
+  ansible.builtin.set_fact:
+    cacheable: true
+    rg_created: "{{ rg_created.stdout | from_json  | default('')}}"
+    

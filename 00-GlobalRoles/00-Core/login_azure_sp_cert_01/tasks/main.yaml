@@ -1,0 +1,56 @@
+---
+# - name: Check if not ligin in the current tenant or subscription
+#   ansible.builtin.command: > 
+#     az account list --query "[?contains(@.id, '{{ subscription_id }}')==true]"
+#     az account list --query "[?contains(@.id, '6e33e6b2-3481-4b26-b509-d218fa37ee85')==true].{Id:id,tenant_id:tenant_id,IsDefault:isDefault}"
+    
+
+#     az account list --query "[].id"
+
+#     az account list --query "[?id=='6e33e6b2-3481-4b26-b509-d218fa37ee85'].id"
+# [
+#   "6e33e6b2-3481-4b26-b509-d218fa37ee85"
+# ]
+
+
+- name: Print spn_appID
+  ansible.builtin.debug:
+    msg: spn_appID - {{ spn_appID }}
+- name: Print tenant_id
+  ansible.builtin.debug:
+    msg: tenant_id - {{ tenant_id }}
+- name: Print certificate
+  ansible.builtin.debug:
+    msg: certificate - {{ certificate }}
+- name: Print certificatePath
+  ansible.builtin.debug:
+    msg: certificatePath - {{ certificatePath }} 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - spn_appID is defined
+    - tenant_id is defined
+    - certificate is defined
+    - certificatePath is defined
+    success_msg: All mandatory variables for azure login are defined
+    fail_msg: Missing mandatory variable(s) to execute azure login
+
+- name: Login to Azure
+  ansible.builtin.command: >
+    az login
+    --service-principal
+    --username={{ spn_appID }}
+    --certificate="{{ certificatePath }}/{{ certificate }}"
+    --tenant {{ tenant_id }}
+  register: azure_login_result
+
+- name: Print azure_login_result
+  ansible.builtin.debug:
+    msg: azure_login_result - {{ azure_login_result.stdout | from_json }}
+
+- name: Set result 
+  ansible.builtin.set_fact:
+    cacheable: true
+    azure_login_result: "{{ azure_login_result.stdout | from_json  | default('')}}"
+    

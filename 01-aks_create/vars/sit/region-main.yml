@@ -1,0 +1,51 @@
+regionalVariables:
+  subscription_id: b63a40da-5629-452a-9350-e48460eae13f
+  location: eastus2
+  region_number: "01"
+  id: sit
+  tags:
+    location: "eastus2"
+identities: 
+  spn:
+    app01:
+      appid: e6503702-ec3a-4266-90a5-d742273f5797
+      certificateName: service-principal.pem
+resourcegroup:
+  resource_group_1:
+    name: resource-group-4
+vnet:
+  vnet_1:
+    name: "{{ regionalVariables.id }}-vnet02-{{ regionalVariables.location }}-{{ regionalVariables.region_number }}"
+    address_prefixes: "[192.168.0.0/16]"
+subnet_vnet_1:
+  group_name: "{{ resourcegroup.resource_group_1.name }}"
+  tags: "{{ regionalVariables.tags }}"
+  settings:
+    vnet_name: "{{ vnet.vnet_1.name }}"
+    subnets:
+    - name: SUBNET-0001
+      subnet_prefix: 192.168.0.0/17
+    - name: SUBNET-0002
+      subnet_prefix: 192.168.128.0/18
+    - name: SUBNET-0003
+      subnet_prefix: 192.168.192.0/18
+aks_1:
+  name: aks1
+  admin_group_object_id: 1cf2fc62-c73d-4a81-9635-6fb4187cfa8d
+  node_count: 1
+  node_resource_group_name: node-rg
+  # node_vm_size: Standard_B2als_v2
+  node_vm_size: Standard_B4ms
+  nodepool_name: nodepool1
+log_workspace:
+  log_workspace_1:
+    name: log-workspace-1
+monitor_workspace:
+  monitor_workspace_1:
+    name: monitor-workspace-1
+grafana_workspaces:
+  grafana_workspace_1:
+    name: grafana-workspace-1
+    sku_tier: Standard
+    publicnetworkaccess: Enabled
+
