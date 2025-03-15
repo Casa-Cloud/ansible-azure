@@ -1,0 +1,35 @@
+---
+- name: "Check Mandatory Variables are defined create-user_task.yaml"
+  ansible.builtin.assert:
+    that:
+      - item is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role.
+
+- name: item - delete-users_task.yaml
+  ansible.builtin.debug:
+    var: item
+
+- name: Check User {{ item.value.user_principal_name }} Exist
+  ansible.builtin.import_role:
+    name: get_user_details_001
+  vars:
+    cloud_element:
+      id: "{{ item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ item.value.mail_nickname }}_out"
+  ignore_errors: true
+
+- name: "{{ item.value.user_principal_name }}_out create-user_task" 
+  ansible.builtin.debug:
+    var: ansible_facts[item.value.mail_nickname + '_out']
+
+- name: Delete {{ item.value.user_principal_name }} if exist
+  ansible.builtin.import_role:
+    name: delete_user_001
+  vars:
+    cloud_element:
+      user_principal_name: "{{ item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ item.value.mail_nickname }}_delete_out"
+  when: 
+    - ansible_facts[item.value.mail_nickname + '_out'].failed==false
+    - ansible_facts[item.value.mail_nickname + '_out'].rc == 0

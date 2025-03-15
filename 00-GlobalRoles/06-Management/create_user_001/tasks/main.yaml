@@ -1,0 +1,33 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.display_name is defined
+    - cloud_element.user_principal_name is defined
+    - cloud_element.password is defined
+    - cloud_element.mail_nickname is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Create user {{ cloud_element.display_name }}
+  ansible.builtin.command: >
+    az ad user create \
+    --display-name  {{ cloud_element.display_name }}
+    --user-principal-name  {{ cloud_element.user_principal_name }}
+    --password {{ cloud_element.password }}
+    --mail-nickname {{ cloud_element.mail_nickname }}
+  register: userCreated
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ userCreated.stdout }}"

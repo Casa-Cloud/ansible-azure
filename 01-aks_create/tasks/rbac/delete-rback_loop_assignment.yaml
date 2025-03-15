@@ -1,0 +1,19 @@
+---
+- name: "Check Mandatory Variables are defined delete-rback_loop_assignment"
+  ansible.builtin.assert:
+    that:
+      - assignment_item is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role.
+
+- name: rbac_item - delete-rback_loop_assignment
+  ansible.builtin.debug:
+    var: assignment_item
+
+- name: remove assignment of {{ assignment_item.principalName }} role  {{ assignment_item.roleDefinitionName }}
+  ansible.builtin.import_role:
+    name: delete_rbac_assignment_001
+  vars:
+    cloud_element:
+      id: "{{ assignment_item.id }}"
+    ansible_facts_output_var: "{{ mail_nickname }}_remove_assignment_out"

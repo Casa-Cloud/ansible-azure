@@ -1,0 +1,33 @@
+---
+
+- name: Create Subnets
+  hosts: all 
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+
+    - name: Print globalvariables
+      ansible.builtin.debug:
+        msg: globalvariables - {{ globalvariables }}
+
+    - name: Print regionalVariables
+      ansible.builtin.debug:
+        msg: regionalVariables - {{ regionalVariables }}
+    
+    - name: Login to Azure
+      ansible.builtin.import_role:
+        name: login_azure_sp_cert_01
+      vars: 
+        spn_appID: "{{ identities.spn.app01.appid }}"
+        tenant_id: "{{ globalvariables.tenant_id }}"
+        certificate: "{{ identities.spn.app01.certificateName }}"
+        certificatePath: "{{ playbook_dir }}/../certificate"
+
+    - name: "Loop through users and setup rbac for each user"
+      ansible.builtin.include_tasks: ../tasks/rbac/assign-rbac_loop_users_task.yaml
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        loop_var: user_item

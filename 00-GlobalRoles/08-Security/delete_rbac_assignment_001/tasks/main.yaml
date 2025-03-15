@@ -1,0 +1,27 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.id is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: delete role {{ cloud_element.id }} 
+  ansible.builtin.command: >
+    az role assignment delete  \
+    --ids {{ cloud_element.id }}
+  register: role_removed
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ role_removed.stdout }}"

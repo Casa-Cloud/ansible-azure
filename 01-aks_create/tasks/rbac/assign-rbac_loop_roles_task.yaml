@@ -1,0 +1,30 @@
+---
+- name: "Check Mandatory Variables are defined assign-rbac_loop_roles_task.yaml"
+  ansible.builtin.assert:
+    that:
+      - rbac_item is defined
+      - mail_nickname is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role.
+
+- name: rbac_item - assign-rbac_loop_roles_task.yaml
+  ansible.builtin.debug:
+    var: rbac_item
+
+- name: mail_nickname - assign-rbac_loop_roles_task.yaml
+  ansible.builtin.debug:
+    var: mail_nickname
+
+- name: user_principal_name - assign-rbac_loop_roles_task.yaml
+  ansible.builtin.debug:
+    var: user_principal_name
+
+- name: assign RBAC {{ rbac_item.role }} to user {{ user_principal_name}}
+  ansible.builtin.import_role:
+    name: assign_rbac_001
+  vars:
+    cloud_element:
+      user_principal_name: "{{ user_principal_name }}"
+      role: "{{ rbac_item.role }}"
+      scope: "{{ rbac_item.scope }}"
+    ansible_facts_output_var: "{{ mail_nickname }}_assignment_out"

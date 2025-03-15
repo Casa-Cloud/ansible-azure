@@ -1,0 +1,34 @@
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.user_principal_name is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Get assignments of {{ cloud_element.user_principal_name }}
+  ansible.builtin.command: >
+    az role assignment list \
+    --assignee {{ cloud_element.user_principal_name }} \
+    --all
+  register: roleAssigned
+- name: roleAssigned
+  ansible.builtin.debug:
+    var: roleAssigned
+- name: ansible_facts_output_var
+  ansible.builtin.debug:
+    var: ansible_facts_output_var
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ roleAssigned.stdout }}"

@@ -114,14 +114,33 @@ Output:- e6503702-ec3a-4266-90a5-d742273f5797
 ```
 az role assignment create \
 --assignee <AppId of Application OR AppId of SP its the same >
---role "Contributor" \
+--role "<role>" \
 --subscription <subsciptionID>
 --scope /subscriptions/<subscriptionID>
+```
+### RBAC Contributer to Grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC
 
+##### User reqire Azure Role 'USER ACCESS ADMINISTRATOR' to run this query.
 
+```
 az role assignment create \
---assignee 80b022e1-16bf-4924-94f8-b2a8b2824eaa \
+--assignee e6503702-ec3a-4266-90a5-d742273f5797 \
 --role "Contributor" \
+--scope /subscriptions/b63a40da-5629-452a-9350-e48460eae13f \
+--subscription b63a40da-5629-452a-9350-e48460eae13f
+```
+
+### As Contributor role is unable to create other users hence 
+1. User Administrator role is Azure Entra Roles and not IAM roles 
+2. Azure Entra roles cannot be assigned via az command as it is limitation.
+3. You need to go to Entra, Roles and Administrators -> Search for "User Administrator"
+-> Add Assignment, and if App01 not found then search and select Applcation
+
+### As Contributor role do not have RBAC to other users during playbook.. hence need to add User Access Administrator. This Role is part of Azure roles so we can use az role command
+```
+az role assignment create \
+--assignee e6503702-ec3a-4266-90a5-d742273f5797 \
+--role "User Access Administrator" \
 --scope /subscriptions/b63a40da-5629-452a-9350-e48460eae13f \
 --subscription b63a40da-5629-452a-9350-e48460eae13f
 ```
@@ -133,33 +152,18 @@ az role assignment delete \
 --role "Contributor"
 ```
 
+OR 
+
+```
+az role assignment delete \
+--ids="/subscriptions/b63a40da-5629-452a-9350-e48460eae13f/providers/Microsoft.Authorization/roleAssignments/910f27fb-73df-4cc4-a17d-18dfef10732c"
+```
+
 ## List role assigned to SP
 ```
 az role assignment list \
 --assignee 80b022e1-16bf-4924-94f8-b2a8b2824eaa
 
-Output:-
-[
-  {
-    "condition": null,
-    "conditionVersion": null,
-    "createdBy": "5b6a6b5b-2c8d-47f1-8327-8f6e1a7d3dd1",
-    "createdOn": "2024-10-06T06:11:07.278565+00:00",
-    "delegatedManagedIdentityResourceId": null,
-    "description": null,
-    "id": "/subscriptions/b63a40da-5629-452a-9350-e48460eae13f/providers/Microsoft.Authorization/roleAssignments/3513b1fa-67f0-4160-a344-b6bb7af7e630",
-    "name": "3513b1fa-67f0-4160-a344-b6bb7af7e630",
-    "principalId": "4c0cfa47-8f38-4f21-bee7-e58e6e47cd9f",
-    "principalName": "e6503702-ec3a-4266-90a5-d742273f5797",
-    "principalType": "ServicePrincipal",
-    "roleDefinitionId": "/subscriptions/b63a40da-5629-452a-9350-e48460eae13f/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
-    "roleDefinitionName": "Contributor",
-    "scope": "/subscriptions/b63a40da-5629-452a-9350-e48460eae13f",
-    "type": "Microsoft.Authorization/roleAssignments",
-    "updatedBy": "5b6a6b5b-2c8d-47f1-8327-8f6e1a7d3dd1",
-    "updatedOn": "2024-10-06T06:11:07.278565+00:00"
-  }
-]
 ```
 
 # Login using Service Principal with Certificate

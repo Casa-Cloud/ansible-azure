@@ -12,7 +12,7 @@ identities:
       certificateName: service-principal.pem
 resourcegroup:
   resource_group_1:
-    # name: resource-group-4
+    name: resource-group-4
 vnet:
   vnet_1:
     name: "{{ regionalVariables.id }}-vnet02-{{ regionalVariables.location }}-{{ regionalVariables.region_number }}"
@@ -28,7 +28,7 @@ subnet_vnet_1:
     - name: SUBNET-0002
       subnet_prefix: 192.168.128.0/18
     - name: SUBNET-0003
-      subnet_prefix: 192.168.192.0/18
+      subnet_prefix: 192.168.192.0/18 # 20.22.16.164
 aks_1:
   name: aks1
   admin_group_object_id: 1cf2fc62-c73d-4a81-9635-6fb4187cfa8d
@@ -48,4 +48,35 @@ grafana_workspaces:
     name: grafana-workspace-1
     sku_tier: Standard
     publicnetworkaccess: Enabled
+users:
+  user1:
+    display_name: "user1"
+    user_principal_name: "user1@casacloud.com"
+    password: "P@ssword123"
+    mail_nickname: "user_01"
+    rbac:
+    - name: "Contributor_user1"
+      role: "Contributor"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+    - name: "AKS_cluster_admin_user1"
+      role: "Azure Kubernetes Service Cluster Admin Role"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+  user2:
+    display_name: "user2"
+    user_principal_name: "user2@casacloud.com"
+    password: "P@ssword123"
+    mail_nickname: "user_02"
+    rbac:
+    - name: "Contributor_user2"
+      role: "Contributor"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+  user3:
+    display_name: "user3"
+    user_principal_name: "user3@casacloud.com"
+    password: "P@ssword123"
+    mail_nickname: "user_03"
+    rbac:
+    - name: "Contributor_user3"
+      role: "Contributor"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
 

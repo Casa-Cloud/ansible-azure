@@ -1,0 +1,66 @@
+---
+
+- name: Create Users
+  hosts: all 
+  connection: local
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+
+    - name: Print globalvariables
+      ansible.builtin.debug:
+        msg: globalvariables - {{ globalvariables }}
+
+    - name: Print regionalVariables
+      ansible.builtin.debug:
+        msg: regionalVariables - {{ regionalVariables }}
+    
+    - name: Login to Azure
+      ansible.builtin.import_role:
+        name: login_azure_sp_cert_01
+      vars: 
+        spn_appID: "{{ identities.spn.app01.appid }}"
+        tenant_id: "{{ globalvariables.tenant_id }}"
+        certificate: "{{ identities.spn.app01.certificateName }}"
+        certificatePath: "{{ playbook_dir }}/../certificate"
+
+    - name: Print regionalVariables
+      ansible.builtin.debug:
+        msg: regionalVariables - {{ regionalVariables }}
+
+    - name: "Loop through users and create"
+      ansible.builtin.include_tasks: ../tasks/create-user_task.yaml
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        loop_var: item
+
+    # - name: Check User {{ globalvariables.users.user3.user_principal_name }} Exist
+    #   ansible.builtin.import_role:
+    #     name: get_user_details_001
+    #   vars:
+    #     cloud_element:
+    #       id: "{{ globalvariables.users.user3.user_principal_name }}"
+    #     ansible_facts_output_var: "user3_details_out"
+    #   ignore_errors: true
+
+    # - name: ansible_facts.user3_details_out
+    #   ansible.builtin.debug:
+    #     var: ansible_facts.user3_details_out
+
+    # - name: Create {{ globalvariables.users.user3.user_principal_name }} if does not exist
+    #   ansible.builtin.import_role:
+    #     name: create_user_001
+    #   vars:
+    #     cloud_element:
+    #       display_name: "{{ globalvariables.users.user3.display_name }}"
+    #       user_principal_name: "{{ globalvariables.users.user3.user_principal_name }}"
+    #       password: "{{ globalvariables.users.user3.password }}"
+    #       mail_nickname: "{{ globalvariables.users.user3.mail_nickname }}"
+    #     ansible_facts_output_var: "user3_create_out"
+    #   when: 
+    #     - "'does not exist' in ansible_facts.user3_details_out.stderr"
+    #     - ansible_facts.user3_details_out.failed==true
+    #     - ansible_facts.user3_details_out.rc != 0

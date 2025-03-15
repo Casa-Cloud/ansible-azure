@@ -1,0 +1,45 @@
+- name: Check User {{ user_item.value.user_principal_name }} Exist
+  ansible.builtin.import_role:
+    name: get_user_details_001
+  vars:
+    cloud_element:
+      id: "{{ user_item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ user_item.value.mail_nickname }}_out"
+  ignore_errors: true
+
+- name: "{{ user_item.value.user_principal_name }}_out assign-rbac" 
+  ansible.builtin.debug:
+    var: ansible_facts[user_item.value.mail_nickname + '_out']
+
+
+- name: get rbac assigned for user {{ user_principal_name}}
+  ansible.builtin.import_role:
+    name: get_assigned_rbac_001
+  vars:
+    cloud_element:
+      user_principal_name: "{{ user_item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ user_item.value.mail_nickname }}_rolelist_out"
+  when:
+  - ansible_facts[user_item.value.mail_nickname + '_out'].failed == false
+  - ansible_facts[user_item.value.mail_nickname + '_out'].rc == 0
+
+- name: "{{ user_item.value.mail_nickname }}_rolelist_out"
+  ansible.builtin.debug:
+    var: ansible_facts[user_item.value.mail_nickname + '_rolelist_out']
+  when:
+  - ansible_facts[user_item.value.mail_nickname + '_out'].failed==false
+  - ansible_facts[user_item.value.mail_nickname + '_out'].rc == 0
+
+
+- name: "Loop through user assignmentes and delete it"
+  ansible.builtin.include_tasks: ../tasks/rbac/delete-rback_loop_assignment.yaml
+  loop:  "{{ ansible_facts[user_item.value.mail_nickname + '_rolelist_out'] }}"
+  loop_control:
+    loop_var: assignment_item
+  vars: 
+    user_principal_name: "{{ user_item.value.user_principal_name }}"
+    mail_nickname: "{{ user_item.value.mail_nickname }}"
+  when: 
+    - (ansible_facts[user_item.value.mail_nickname + '_rolelist_out'] | length) > 0
+    - ansible_facts[user_item.value.mail_nickname + '_out'].failed==false
+    - ansible_facts[user_item.value.mail_nickname + '_out'].rc == 0
