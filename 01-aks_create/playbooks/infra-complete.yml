@@ -17,3 +17,9 @@
 
 - name: Create Azure Kubernetes
   import_playbook: create-aks.yml
+
+- name: Create Users in AAD
+  import_playbook: create-users.yaml
+
+- name: Add RBAC to users
+  import_playbook: rbac-setup.yml
