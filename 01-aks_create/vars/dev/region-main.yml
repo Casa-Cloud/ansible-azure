@@ -70,6 +70,9 @@ users:
     - name: "Contributor_user2"
       role: "Contributor"
       scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+    - name: "Azure Kubernetes Service Cluster User Role_user2" 
+      role: "Azure Kubernetes Service Cluster User Role"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
   user3:
     display_name: "user3"
     user_principal_name: "user3@casacloud.com"
@@ -78,5 +81,44 @@ users:
     rbac:
     - name: "Contributor_user3"
       role: "Contributor"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+    - name: "Azure Kubernetes Service RBAC Cluster Admin Role_user3"
+      role: "Azure Kubernetes Service RBAC Cluster Admin"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+  user4:
+    display_name: "user4"
+    user_principal_name: "user4@casacloud.com"
+    password: "P@ssword123"
+    mail_nickname: "user_04"
+    rbac:
+    - name: "Contributor_user4"
+      role: "Contributor"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+    - name: "Azure Kubernetes Service RBAC Admin_user4"
+      role: "Azure Kubernetes Service RBAC Admin"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+  user5:
+    display_name: "user5"
+    user_principal_name: "user5@casacloud.com"
+    password: "P@ssword123"
+    mail_nickname: "user_05"
+    rbac:
+    - name: "Contributor_user5"
+      role: "Contributor"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+    - name: "Azure Kubernetes Service RBAC Reader_user5"
+      role: "Azure Kubernetes Service RBAC Reader"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+  user6:
+    display_name: "user6"
+    user_principal_name: "user6@casacloud.com"
+    password: "P@ssword123"
+    mail_nickname: "user_06"
+    rbac:
+    - name: "Contributor_user6"
+      role: "Contributor"
+      scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
+    - name: "Azure Kubernetes Service RBAC Writer_user6"
+      role: "Azure Kubernetes Service RBAC Writer"
       scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
 

@@ -131,9 +131,9 @@
       ansible.builtin.debug:
         var: aks_cloud_element
 
-    - name: Pause for 5 seconds before running next playbook
+    - name: Pause for 60 seconds before running next playbook
       ansible.builtin.command:
-        cmd: sleep 30
+        cmd: sleep 60
 
 
     - name: Create AKS
