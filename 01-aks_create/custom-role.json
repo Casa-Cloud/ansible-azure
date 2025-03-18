@@ -1,0 +1,18 @@
+{
+    "Name": "Custom Role Full Data access to AKS",
+    "Description": "Allows user Full Data access to AKS",
+    "IsCustom": true,
+    "Actions": [],
+    "NotActions": [],
+    "DataActions": [
+        "Microsoft.ContainerService/managedClusters/*"
+    ],
+    "NotDataActions": [
+        "Microsoft.ContainerService/managedClusters/namespaces/write",
+        "Microsoft.ContainerService/managedClusters/namespaces/delete",
+        "Microsoft.ContainerService/managedClusters/namespaces/read"
+    ],
+    "AssignableScopes": [
+        "/subscriptions/b63a40da-5629-452a-9350-e48460eae13f"
+    ]
+}
