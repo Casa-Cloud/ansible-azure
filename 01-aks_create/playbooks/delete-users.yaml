@@ -26,8 +26,8 @@
         loop_var: user_item
 
     # This loop is important and working. do not remove it.
-    # - name: "Loop through users and delete"
-    #   ansible.builtin.include_tasks: ../tasks/delete-users_task.yaml
-    #   loop: "{{ users | dict2items }}"
-    #   loop_control:
-    #     loop_var: item
+    - name: "Loop through users and delete"
+      ansible.builtin.include_tasks: ../tasks/delete-users_task.yaml
+      loop: "{{ users | dict2items }}"
+      loop_control:
+        loop_var: item
