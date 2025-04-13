@@ -1,0 +1,57 @@
+---
+- name: Print cloud_element
+  ansible.builtin.debug:
+    var: cloud_element
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+
+# - name: Print location
+#   ansible.builtin.debug:
+#     msg: location - {{ location }}
+# - name: Print tags
+#   ansible.builtin.debug:
+#     msg: tags - {{ tags }}
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.name is defined
+    - cloud_element.group_name is defined
+    - cloud_element.acr_name is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Check Azure AKS access to ACR
+  ansible.builtin.command: >
+    az aks check-acr \
+    --name {{ cloud_element.name }} \
+    --resource-group {{ cloud_element.group_name }} \
+    --acr {{ cloud_element.acr_name }} \
+    --output tsv
+  register: access_to_acr_output
+
+# Print ACR ID - in the role
+- name: "Print access_to_acr_output inside role" 
+  ansible.builtin.debug:
+    var: access_to_acr_output.stdout
+
+- name: Check if ACR access succeeded and set fact
+  ansible.builtin.set_fact:
+    acr_access_succeeded: "{{ 'Validating image pull permission: SUCCEEDED' in access_to_acr_output.stdout }}"
+
+# Print ACR ID - in the role
+- name: "Print access_to_acr_output inside role" 
+  ansible.builtin.debug:
+    var: acr_access_succeeded
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ acr_access_succeeded }}"

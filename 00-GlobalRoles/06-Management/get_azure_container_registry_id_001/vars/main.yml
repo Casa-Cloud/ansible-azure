@@ -1,0 +1,2 @@
+local_tags:  "{{ cloud_element.tags }}"
+local_subscription_id: "{{ cloud_element.subscription_id | default('') }}"

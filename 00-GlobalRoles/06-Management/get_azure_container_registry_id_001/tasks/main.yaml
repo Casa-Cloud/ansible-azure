@@ -1,0 +1,47 @@
+---
+- name: Print cloud_element
+  ansible.builtin.debug:
+    var: cloud_element
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+
+# - name: Print location
+#   ansible.builtin.debug:
+#     msg: location - {{ location }}
+# - name: Print tags
+#   ansible.builtin.debug:
+#     msg: tags - {{ tags }}
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.name is defined
+    - cloud_element.group_name is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Get Azure Container Registry ID
+  ansible.builtin.command: >
+    az acr show \
+    --resource-group {{ cloud_element.group_name }} \
+    --name {{ cloud_element.name }} \
+    --query "id" \
+    --output tsv
+  register: acr_id
+
+# Print ACR ID - in the role
+- name: "Print {{ container_registry.container_registry_1.name }} id inside role" 
+  ansible.builtin.debug:
+    var: acr_id.stdout
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ acr_id.stdout }}"
