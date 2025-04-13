@@ -1,3 +1,11 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
 ---
 - name: Create Resource Group
   import_playbook: 01.create-rg.yml
@@ -26,3 +34,6 @@
 
 - name: Create Azure Container registry
   import_playbook: 09.create-acr.yml
+
+- name: Attach ACR to AKS
+  import_playbook: 10.acr-attach-to-aks.yml
