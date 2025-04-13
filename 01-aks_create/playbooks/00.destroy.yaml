@@ -43,4 +43,4 @@
         var: ansible_facts.rg_deleted
 
 - name: Remove users in AAD and also remove RBAC assigned to those users 
-  import_playbook: delete-users.yaml
+  import_playbook: 11.delete-users.yaml

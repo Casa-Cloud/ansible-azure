@@ -19,6 +19,7 @@
         certificate: "{{ identities.spn.app01.certificateName }}"
         certificatePath: "{{ playbook_dir }}/../certificate"
 
+    # this is looping through the users list in regin-main.yml
     - name: "Loop through users and delete assigned roles"
       ansible.builtin.include_tasks: ../tasks/rbac/delete-rbac_loop_users.yaml
       loop: "{{ users | dict2items }}"

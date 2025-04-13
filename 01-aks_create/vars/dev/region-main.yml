@@ -48,6 +48,11 @@ grafana_workspaces:
     name: grafana-workspace-1
     sku_tier: Standard
     publicnetworkaccess: Enabled
+container_registry:
+  container_registry_1:
+    name: casaacr01
+    sku_tier: Standard
+    publicnetworkaccess: Enabled
 users:
   user1:
     display_name: "user1"

@@ -1,5 +1,5 @@
 ---
-- name: "Check Mandatory Variables are defined create-user_task.yaml"
+- name: "Check Mandatory Variables are defined delete-user_task.yaml"
   ansible.builtin.assert:
     that:
       - item is defined
@@ -19,7 +19,7 @@
     ansible_facts_output_var: "{{ item.value.mail_nickname }}_out"
   ignore_errors: true
 
-- name: "{{ item.value.user_principal_name }}_out create-user_task" 
+- name: "{{ item.value.user_principal_name }}_out delete-user_task" 
   ansible.builtin.debug:
     var: ansible_facts[item.value.mail_nickname + '_out']
 
