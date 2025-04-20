@@ -1,0 +1,54 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      # - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+# - name: Assert mandatory variables are defined
+#   ansible.builtin.assert:
+#     that:
+#     - cloud_element.user_principal_name is defined
+#     - cloud_element.role is defined
+#     - cloud_element.scope is defined
+#     success_msg: All mandatory variables for this role are present
+#     fail_msg: Missing mandatory variable(s) for this role
+
+# - name: Assign role {{ cloud_element.role }} to  {{ cloud_element.user_principal_name }}
+#   ansible.builtin.command: >
+#     az role assignment create \
+#     --assignee {{ cloud_element.user_principal_name }} \
+#     --role "{{ cloud_element.role }}" \
+#     --scope "{{ cloud_element.scope }}"
+#   register: roleAssigned
+#   changed_when: roleAssigned.rc == 0
+- name: Check if git is available
+  command: which git
+  register: git_check
+  ignore_errors: true
+
+- name: Fail if git is not installed
+  fail:
+    msg: "Git is not installed on this system!"
+  when: git_check.rc != 0
+
+- name: Print success message
+  debug:
+    msg: "Git is installed on this system."
+  when: git_check.rc == 0
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ git_check.stdout }}"

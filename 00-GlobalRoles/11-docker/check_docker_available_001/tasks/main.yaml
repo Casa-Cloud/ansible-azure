@@ -1,0 +1,45 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      # - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+
+- name: Check if Docker is installed
+  command: which docker
+  register: docker_check
+  ignore_errors: true
+
+- name: Fail if Docker is not installed
+  fail:
+    msg: "Docker is not installed on this system!"
+  when: docker_check.rc != 0
+
+- name: Check if Docker service is running
+  shell: |
+    docker info >/dev/null 2>&1 && echo "Docker is running" || echo "Docker is not running"
+  register: docker_status
+  changed_when: false
+  ignore_errors: true
+
+- name: Fail if Docker is not running
+  fail:
+    msg: "Docker service is not running!"
+  when: docker_status.stdout is not search("is running")
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ docker_status.stdout }}"

@@ -134,4 +134,12 @@ users:
     - name: "Azure Kubernetes Service RBAC Writer_user6"
       role: "Azure Kubernetes Service RBAC Writer"
       scope: "/subscriptions/{{ regionalVariables.subscription_id }}"
-
+ms:
+  ms1:
+    name: "nodejstemplate"
+    github_repo_url: "https://github.com/Casa-Cloud/NodeJS-Typescript-Blueprint.git"
+    localFolderToCloneSuffix:
+      name: "nodejstemplate"
+      mode: "0755"
+    docker_image_name: "nodejstemplate"
+    docker_image_version: "v1.0.6"

@@ -1,0 +1,46 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.container_registry is defined
+    - cloud_element.imageName is defined
+    - cloud_element.version is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: push docker image to ACR
+  shell: |
+    docker rmi "{{ cloud_element.container_registry }}{{ cloud_element.imageName }}:{{ cloud_element.version }}"
+  register: docker_rmi_status
+
+- name: Fail if docker build
+  fail:
+    msg: "Failed:- Docker image removed successfully from local system"
+  when: docker_rmi_status.rc != 0
+
+- name: Print success message
+  debug:
+    msg: "Docker image removed successfully from local system."
+  when: docker_rmi_status.rc == 0
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ docker_rmi_status.rc }}"
