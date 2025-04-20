@@ -1,0 +1,35 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+- name: Check if git is available
+  command: which helm
+  register: helm_check
+  ignore_errors: true
+
+- name: Fail if helm is not installed
+  fail:
+    msg: "helm is not installed on this system!"
+  when: helm_check.rc != 0
+
+- name: Print success message
+  debug:
+    msg: "helm is installed on this system."
+  when: helm_check.rc == 0
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ helm_check.stdout }}"

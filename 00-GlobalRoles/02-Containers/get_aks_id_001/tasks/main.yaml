@@ -1,0 +1,47 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+- name: Print cloud_element
+  ansible.builtin.debug:
+    var: cloud_element
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.name is defined
+    - cloud_element.group_name is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Get AKS ID
+  ansible.builtin.command: >
+    az aks show \
+    --resource-group {{ cloud_element.group_name }} \
+    --name {{ cloud_element.name }} \
+    --query "id" \
+    --output tsv
+  register: aks_id
+
+# Print AKS ID - in the role
+- name: "Print AKS id inside role" 
+  ansible.builtin.debug:
+    var: aks_id.stdout
+
+- name: Set result
+  ansible.builtin.set_fact:
+    cacheable: true
+    "{{ ansible_facts_output_var | mandatory }}": "{{ aks_id.stdout }}"

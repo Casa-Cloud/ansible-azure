@@ -1,0 +1,78 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+
+- name: "Check Mandatory Variables are defined"
+  ansible.builtin.assert:
+    that: 
+      - ansible_facts_output_var is defined
+      - cloud_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role. 
+
+- name: Assert mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+    - cloud_element.releaseName is defined
+    - cloud_element.helmChartFolderPath is defined
+    success_msg: All mandatory variables for this role are present
+    fail_msg: Missing mandatory variable(s) for this role
+
+- name: Try installing Helm chart
+  shell: helm install "{{ cloud_element.releaseName }}" "{{ cloud_element.helmChartFolderPath }}"
+  register: helm_install_status
+  ignore_errors: true
+
+- name: helm_install_status
+  ansible.builtin.debug:
+    var: helm_install_status
+
+- block: # helm Install Success
+  - name: Print success message
+    debug:
+      msg: "Helm chart installed successfully."
+  
+  - name: Set result
+    ansible.builtin.set_fact:
+      cacheable: true
+      "{{ ansible_facts_output_var | mandatory }}": "{{ helm_install_status.rc }}"
+  when:
+    - helm_install_status.rc == 0
+
+- block: # Helm Install Failed, Chart not present as well
+  - name: Fail if Helm install failed for another reason
+    fail:
+      msg: "Helm install failed: {{ helm_install_status.stderr }}"
+  - name: Set result
+    ansible.builtin.set_fact:
+      cacheable: true
+      "{{ ansible_facts_output_var | mandatory }}": "{{ helm_install_status.rc }}"
+  when: 
+    - "'cannot re-use a name that is still in use' not in helm_install_status.stderr"
+    - helm_install_status.rc != 0
+
+- block: # Helm Chart already presnet, update the helmchart
+
+  - name: Print Helm chart already preasent, upgrading now
+    debug:
+      msg: "Helm chart already preasent, upgrading now"
+  - name: Chart already present, running helm upgrade chart instead
+    shell: helm upgrade "{{ cloud_element.releaseName }}" "{{ cloud_element.helmChartFolderPath }}"
+    register: helm_upgrade_status
+  - name: Set result
+    ansible.builtin.set_fact:
+      cacheable: true
+      "{{ ansible_facts_output_var | mandatory }}": "{{ helm_upgrade_status.rc }}"
+  when: 
+    - "'cannot re-use a name that is still in use' in helm_install_status.stderr"
+    - helm_install_status.rc != 0
+
+
+
+  
