@@ -1,0 +1,129 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+- name: Check if Git is installed
+  hosts: all
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+
+    - name: Login to Azure
+      ansible.builtin.import_role:
+        name: login_azure_sp_cert_01
+      vars: 
+        spn_appID: "{{ identities.spn.app01.appid }}"
+        tenant_id: "{{ globalvariables.tenant_id }}"
+        certificate: "{{ identities.spn.app01.certificateName }}"
+        certificatePath: "{{ playbook_dir }}/../certificate"
+
+    - name: "GetAKS id"
+      ansible.builtin.import_role:
+        name: get_aks_id_001
+      vars: 
+        cloud_element:
+          name: "{{ aks_1.name }}"
+          group_name: "{{ resourcegroup.resource_group_1.name }}"
+        ansible_facts_output_var: "ask_id_out"
+    
+    - name: ask_id_out
+      ansible.builtin.debug:
+        var: ansible_facts.ask_id_out
+    
+    # Assign RBAC Azure Kubernetes Service RBAC Writer to SP to allow intall helm chart
+    - name: assign RBAC AcrPull to Aks kubelet clientID 
+      ansible.builtin.import_role:
+        name: assign_rbac_001
+      vars:
+        cloud_element:
+          user_principal_name: "{{ identities.spn.app01.appid}}"
+          role: "Azure Kubernetes Service RBAC Writer"
+          scope: "{{ ansible_facts.ask_id_out }}"
+        ansible_facts_output_var: "RBAC_assigned_AKS_out"
+    
+    - name: RBAC_assigned_AKS_out
+      ansible.builtin.debug:
+        var: ansible_facts.RBAC_assigned_AKS_out
+
+    
+    - name: Login to AKS
+      ansible.builtin.import_role:
+        name: login_aks_001
+      vars: 
+        cloud_element:
+          name: "{{ aks_1.name }}"
+          group_name: "{{ resourcegroup.resource_group_1.name }}"
+        ansible_facts_output_var: "aks_login_out"
+
+    - name: Check if helm is available
+      ansible.builtin.import_role:
+        name: check_helm_availabe_001
+      vars:
+        ansible_facts_output_var: "helm_availabe_out"
+    - name: ansible_facts.helm_availabe_out
+      ansible.builtin.debug:
+        var: ansible_facts.helm_availabe_out
+    
+    - name: Set a local variable for helm repo
+      set_fact:
+        helmFolderName: "{{ lookup('env','PWD') }}/{{ ms.ms1.localFolderToCloneSuffix.name }}_helm_{{ ansible_date_time.epoch }}"
+
+    - name: helmFolderName
+      ansible.builtin.debug:
+        var: helmFolderName
+
+    - name: Create temporary folder for cloning repository
+      ansible.builtin.import_role:
+        name: create_folder_001
+      vars:
+        cloud_element:
+          path: "{{ helmFolderName }}"
+          mode: "{{ms.ms1.localFolderToCloneSuffix.mode}}"
+        ansible_facts_output_var: "folder1_created_out"
+    - name: ansible_facts.helm_folder1_created_out
+      ansible.builtin.debug:
+        var: ansible_facts.helm_folder1_created_out
+    
+    - name: Git Clone helm chart
+      ansible.builtin.import_role:
+        name: git_clone_001
+      vars:
+        cloud_element:
+          repo: "{{ ms.ms1.github_helm_repo_url }}"
+          dest: "{{ helmFolderName }}"
+        ansible_facts_output_var: "git_helm_clone_out"
+    - name: ansible_facts.git_helm_clone_out
+      ansible.builtin.debug:
+        var: ansible_facts.git_helm_clone_out
+    
+    - name: helm install microservice
+      ansible.builtin.import_role:
+        name: helm_install_001
+      vars:
+        cloud_element:
+          releaseName: "{{ ms.ms1.name }}"
+          helmChartFolderPath: "{{ helmFolderName }}/{{ ms.ms1.helm_chart_folder_name }}"
+        ansible_facts_output_var: "helm_install_out"
+    - name: ansible_facts.helm_install_out
+      ansible.builtin.debug:
+        var: ansible_facts.helm_install_out
+
+
+    - name: Remove folder from local 
+      ansible.builtin.import_role:
+        name: remove_folder_001
+      vars:
+        cloud_element:
+          localFolderName: "{{ helmFolderName }}"
+        ansible_facts_output_var: "helm_folder_removed_out"
+    - name: ansible_facts.helm_folder_removed_out
+      ansible.builtin.debug:
+        var: ansible_facts.helm_folder_removed_out

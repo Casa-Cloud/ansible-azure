@@ -9,10 +9,6 @@
 ---
 - name: Check if Git is installed
   hosts: all
-  # vars:
-  #   temp_git_dir: "{{ lookup('env','PWD') }}/git_repo_{{ ansible_date_time.epoch }}"
-  #   github_repo_url: "https://github.com/Casa-Cloud/NodeJS-Typescript-Blueprint.git"
-  #   docker_image_name: "casaacr01.azurecr.io/nodejstemplate:v1.0.5"
   tasks:
     - name: Include Azure factory global main variables 
       include_vars: "{{ playbook_dir }}/../vars/global-main.yml"

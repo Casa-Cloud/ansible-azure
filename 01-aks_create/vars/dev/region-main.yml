@@ -137,7 +137,9 @@ users:
 ms:
   ms1:
     name: "nodejstemplate"
+    helm_chart_folder_name: "01-nodejstemplate"
     github_repo_url: "https://github.com/Casa-Cloud/NodeJS-Typescript-Blueprint.git"
+    github_helm_repo_url: "https://github.com/Casa-Cloud/helm-chart.git"
     localFolderToCloneSuffix:
       name: "nodejstemplate"
       mode: "0755"

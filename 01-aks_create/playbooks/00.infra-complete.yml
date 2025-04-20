@@ -38,9 +38,8 @@
 - name: Attach ACR to AKS
   import_playbook: 10.acr-attach-to-aks.yml
 
-- name: Pull project for github
+- name: CI - Pull project, created image, push to ACR
   import_playbook: 13.pull-project.yml
-# - name: create docker image
-# - name: push docker image to ACR
-# - name: delete pulled nodejs project
-# - name: delete docker image
+
+- name: CD - Helm Install Microservice
+  import_playbook: 14.helm-install-microservices.yml
