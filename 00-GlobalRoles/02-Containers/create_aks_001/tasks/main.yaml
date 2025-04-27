@@ -44,6 +44,14 @@
     success_msg: All mandatory variables for this role are present
     fail_msg: Missing mandatory variable(s) for this role
 
+- name: Check if AKS cluster exists
+  ansible.builtin.command: >
+    az aks show
+    --name {{ cloud_element.name }}
+    --resource-group {{ cloud_element.group_name }}
+  register: aks_exists
+  ignore_errors: true
+  
 - name: Create AKS
   ansible.builtin.command: >
     az aks create \
@@ -67,8 +75,8 @@
     --disable-local-accounts \
     --data-collection-settings {{ role_path }}/files{{ cloud_element.data_collection_settings }}
     --ssh-key-value ~/.ssh/id_rsa.pub
-    
   register: aks_created
+  when: aks_exists.failed
   # --data-collection-settings {{ role_path }}/files{{ cloud_element.data_collection_settings }}
   # --azure-monitor-workspace-resource-id {{ cloud_element.monitor_workspace_resource }} \ this is imp. as grafan is not working hence not adding this for now
   # --enable-ama-monitoring \
@@ -77,9 +85,17 @@
 - name: Print aks_created
   ansible.builtin.debug:
     msg: aks_created - {{ aks_created }}
+  when: aks_exists.failed
 
 - name: Set result 
   ansible.builtin.set_fact:
     cacheable: true
     aks_created: "{{ aks_created.stdout | from_json  | default('')}}"
+  when: aks_exists.failed
     
+
+- name: Set result when aks already exists
+  ansible.builtin.set_fact:
+    cacheable: true
+    aks_created: "{{ aks_exists.stdout | from_json  | default('')}}"
+  when: not aks_exists.failed
