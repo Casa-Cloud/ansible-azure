@@ -1,0 +1,29 @@
+collections:
+  - name: casa_cloud.core
+    version: "==1.0.0"
+  - name: casa_cloud.containers
+    version: "==1.0.0"
+  - name: casa_cloud.networking
+    version: "==1.0.0"
+  - name: casa_cloud.management
+    version: "==1.0.0"
+  - name: casa_cloud.security
+    version: "==1.0.0"
+  - name: casa_cloud.analytics
+    version: "==1.0.0"
+  - name: casa_cloud.database
+    version: "==1.0.0"
+  - name: casa_cloud.compute
+    version: "==1.0.0"
+  - name: casa_cloud.storage
+    version: "==1.0.0"
+  - name: casa_cloud.web
+    version: "==1.0.0"
+  - name: casa_cloud.github
+    version: "==1.0.0"
+  - name: casa_cloud.docker
+    version: "==1.0.0"
+  - name: casa_cloud.localhost
+    version: "==1.0.0"
+  - name: casa_cloud.helm
+    version: "==1.0.0"

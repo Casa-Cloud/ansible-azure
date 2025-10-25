@@ -1,0 +1,39 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+
+- name: Azure Container Registry
+  hosts: all 
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+    
+    - name: Login to Azure
+      ansible.builtin.import_role:
+        name: login_azure_sp_cert_01
+      vars: 
+        spn_appID: "{{ identities.spn.app01.appid }}"
+        tenant_id: "{{ globalvariables.tenant_id }}"
+        certificate: "{{ identities.spn.app01.certificateName }}"
+        certificatePath: "{{ playbook_dir }}/../certificate"
+
+    
+    - name: "Calling task to attach ACR to AKS"
+      ansible.builtin.include_tasks: ../tasks/acr-attach-to-aks_task.yml
+      vars: 
+        task_element:
+          acr_name: "{{ container_registry.container_registry_1.name }}"
+          group_name: "{{ resourcegroup.resource_group_1.name }}"
+          aks_name: "{{ aks_1.name }}"
+  
+
+    

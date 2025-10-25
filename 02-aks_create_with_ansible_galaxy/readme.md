@@ -1,24 +1,4 @@
-Setup Roles Path.
 
-```
-source setup.sh
-```
-By default, running a shell script as ./setup.sh runs it in a subshell, 
-which means that the environment variables defined in the script will 
-not be reflected in your current shell session after the script ends.
-To make the exported variables available in your current shell, 
-you need to source the script instead of executing it in a subshell.
-
-# Get default role path
-```
- ansible-config dump | grep ROLES_PATH
-DEFAULT_ROLES_PATH(default) = ['/Users/alokadhao/.ansible/roles', '/usr/share/ansible/roles', '/etc/ansible/roles']
-```
-
-```
-# To check all ansible configuration includeing the roles_path use command ansible-config dump | grep DEFAULT_ROLES_PATH
-DEFAULT_ROLES_PATH(/Users/alokadhao/Documents/github/imagincloud/ansible-azure/01-aks_create/ansible.cfg) = ['/Users/alokadhao/Documents/github/imagincloud/ansible-azure/01-aks_create/roles', '/Users/alokadhao/Documents/github/imagincloud/ansible-azure/00-GlobalRoles/00-Core', '/Users/alokadhao/Documents/github/imagincloud/ansible-azure/00-GlobalRoles/02-Containers', '/Users/alokadhao/Documents/github/imagincloud/ansible-azure/00-GlobalRoles/03-Networking', '/Users/alokadhao/Documents/github/imagincloud/ansible-azure/00-GlobalRoles/06-Management']
-```
 
 # Run Create Resource Group Playbook for Dev Env
 ```
@@ -66,7 +46,7 @@ az login
 
 ## Create Application
 ```
-az ad app create --display-name app02
+az ad app create --display-name infra
 ```
 
 ## List Applcation
@@ -82,7 +62,7 @@ az ad sp list -o table
 ## Create Service Prinicipal and attach it to Application created above
 ```
 az ad sp create --id <AppId of Aplication>
-az ad sp create --id 80b022e1-16bf-4924-94f8-b2a8b2824eaa
+az ad sp create --id f584d2bc-2f90-4347-9104-af952f2c59af
 ```
 
 ## Create a Certificate and attach it to Application created above
@@ -92,24 +72,23 @@ az ad app credential reset \
 --cert "@./service-principal.pem"
 
 az ad app credential reset \
---id 80b022e1-16bf-4924-94f8-b2a8b2824eaa \
+--id f584d2bc-2f90-4347-9104-af952f2c59af \
 --cert "@./service-principal.pem"
 ```
 
 ## List Certificate of application
 ```
 az ad app credential list --id <AppId of Aplication> --cert
-az ad app credential list --id 80b022e1-16bf-4924-94f8-b2a8b2824eaa --cert
+az ad app credential list --id f584d2bc-2f90-4347-9104-af952f2c59af --cert
 Certificate KeyId is unique ID of certificate
 ```
-
 ## Get SP ID
 ```
-az ad sp list 
+az ad sp list -o table
 
 Get AppID of the SP which is same as Appicaiton CliendID 
 
-Output:- e6503702-ec3a-4266-90a5-d742273f5797
+Output:- f584d2bc-2f90-4347-9104-af952f2c59af
 
 ```
 
@@ -127,10 +106,10 @@ az role assignment create \
 
 ```
 az role assignment create \
---assignee e6503702-ec3a-4266-90a5-d742273f5797 \
+--assignee f584d2bc-2f90-4347-9104-af952f2c59af \
 --role "Contributor" \
---scope /subscriptions/b63a40da-5629-452a-9350-e48460eae13f \
---subscription b63a40da-5629-452a-9350-e48460eae13f
+--scope /subscriptions/3f9865ad-7775-47bb-ba40-18f30d2bb648 \
+--subscription 3f9865ad-7775-47bb-ba40-18f30d2bb648
 ```
 
 ### As Contributor role is unable to create other users hence 
@@ -142,10 +121,10 @@ az role assignment create \
 ### As Contributor role do not have RBAC to other users during playbook.. hence need to add User Access Administrator. This Role is part of Azure roles so we can use az role command
 ```
 az role assignment create \
---assignee e6503702-ec3a-4266-90a5-d742273f5797 \
+--assignee f584d2bc-2f90-4347-9104-af952f2c59af \
 --role "User Access Administrator" \
---scope /subscriptions/b63a40da-5629-452a-9350-e48460eae13f \
---subscription b63a40da-5629-452a-9350-e48460eae13f
+--scope /subscriptions/3f9865ad-7775-47bb-ba40-18f30d2bb648 \
+--subscription 3f9865ad-7775-47bb-ba40-18f30d2bb648
 ```
 
 ## Delete Role assignment
@@ -165,7 +144,7 @@ az role assignment delete \
 ## List role assigned to SP
 ```
 az role assignment list \
---assignee 80b022e1-16bf-4924-94f8-b2a8b2824eaa
+--assignee f584d2bc-2f90-4347-9104-af952f2c59af
 
 ```
 
@@ -185,19 +164,3 @@ az login \
 --tenant 4abb5e5e-af15-4a34-b3c2-18f4a9303ee4
 
 ```
-
-# Create Deployment
-kubectl create deployment helloworld --image=aloka/testci:8 
-
-# Port Forwarding
-kubectl port-forward helloworld-cff5bddc4-57ldg 9085:9085
-
-
-# Portforward a service 
-kubectl port-forward service/<service-name> <local-port>:<service-port> [flags]
-
-## Port forward service app1
-kubectl port-forward service/aks-helloworld-one 8056:80 -n ingress-basic
-
-## Port forward service app2
-kubectl port-forward service/aks-helloworld-two 8057:80 -n ingress-basic

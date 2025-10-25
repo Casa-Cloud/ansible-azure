@@ -1,0 +1,47 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+- name: "Check Mandatory Variables are defined create-user_task.yaml"
+  ansible.builtin.assert:
+    that:
+      - item is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role.
+
+- name: item - create-user_task.yaml
+  ansible.builtin.debug:
+    var: item
+
+- name: Check User {{ item.value.user_principal_name }} Exist
+  ansible.builtin.import_role:
+    name: get_user_details_001
+  vars:
+    cloud_element:
+      id: "{{ item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ item.value.mail_nickname }}_out"
+  ignore_errors: true
+
+- name: "{{ item.value.user_principal_name }}_out create-user_task" 
+  ansible.builtin.debug:
+    var: ansible_facts[item.value.mail_nickname + '_out']
+
+- name: Create {{ item.value.user_principal_name }} if does not exist
+  ansible.builtin.import_role:
+    name: create_user_001
+  vars:
+    cloud_element:
+      display_name: "{{ item.value.display_name }}"
+      user_principal_name: "{{ item.value.user_principal_name }}"
+      password: "{{ item.value.password }}"
+      mail_nickname: "{{ item.value.mail_nickname }}"
+    ansible_facts_output_var: "{{ item.value.mail_nickname }}_create_out"
+  when: 
+    - "'does not exist' in ansible_facts[item.value.mail_nickname + '_out'].stderr"
+    - ansible_facts[item.value.mail_nickname + '_out'].failed==true
+    - ansible_facts[item.value.mail_nickname + '_out'].rc != 0

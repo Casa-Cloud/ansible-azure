@@ -1,0 +1,64 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+# Pulling the user's details from Azure AD
+- name: Check User {{ user_item.value.user_principal_name }} Exist
+  ansible.builtin.import_role:
+    name: get_user_details_001
+  vars:
+    cloud_element:
+      id: "{{ user_item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ user_item.value.mail_nickname }}_out"
+  ignore_errors: true
+
+# Print user details if the user's details from Azure AD
+- name: "{{ user_item.value.user_principal_name }}_out assign-rbac" 
+  ansible.builtin.debug:
+    var: ansible_facts[user_item.value.mail_nickname + '_out']
+
+# If Users are present then get the RBAC assigned to the user
+# Skip this task if the user is not present
+- name: get rbac assigned for user {{ user_principal_name}}
+  ansible.builtin.import_role:
+    name: get_assigned_rbac_001
+  vars:
+    cloud_element:
+      user_principal_name: "{{ user_item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ user_item.value.mail_nickname }}_rolelist_out"
+  when:
+  - ansible_facts[user_item.value.mail_nickname + '_out'].failed == false
+  - ansible_facts[user_item.value.mail_nickname + '_out'].rc == 0
+
+- name: "{{ user_item.value.mail_nickname }}_rolelist_out"
+  ansible.builtin.debug:
+    var: ansible_facts[user_item.value.mail_nickname + '_rolelist_out']
+  when:
+  - ansible_facts[user_item.value.mail_nickname + '_out'].failed==false
+  - ansible_facts[user_item.value.mail_nickname + '_out'].rc == 0
+
+# - name: ansible_facts
+#   ansible.builtin.debug:
+#     var: ansible_facts
+
+# - name: "print {{ user_item.value.mail_nickname }}_rolelist_out" 
+#   ansible.builtin.debug:
+#     var: ansible_facts[user_item.value.mail_nickname + '_rolelist_out']
+
+- name: "Loop through user assignmentes and delete it"
+  ansible.builtin.include_tasks: ../tasks/rbac/delete-rback_loop_assignment.yaml
+  loop:  "{{ ansible_facts[user_item.value.mail_nickname + '_rolelist_out'] }}"
+  loop_control:
+    loop_var: assignment_item
+  vars: 
+    user_principal_name: "{{ user_item.value.user_principal_name }}"
+    mail_nickname: "{{ user_item.value.mail_nickname }}"
+  when: 
+    - (ansible_facts[user_item.value.mail_nickname + '_rolelist_out']) is defined
+    - (ansible_facts[user_item.value.mail_nickname + '_rolelist_out'] | length) > 0
+    - ansible_facts[user_item.value.mail_nickname + '_out'].failed==false
+    - ansible_facts[user_item.value.mail_nickname + '_out'].rc == 0

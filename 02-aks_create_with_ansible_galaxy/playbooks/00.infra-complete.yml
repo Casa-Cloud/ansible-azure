@@ -1,0 +1,45 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+- name: Create Resource Group
+  import_playbook: 01.create-rg.yml
+
+- name: Create VNET
+  import_playbook: 02.create-vnet.yml
+
+- name: Create Subnets
+  import_playbook: 03.create-subnets.yml
+
+- name: Create Log-Workspace
+  import_playbook: 04.create-log-worspace.yml
+
+- name: Create Monitoring-Workspace
+  import_playbook: 05.create-monitor-workspace.yml
+  when: Monitor_Workspace is defined and Monitor_Workspace == true
+
+- name: Create Azure Kubernetes
+  import_playbook: 06.create-aks.yml
+
+# - name: Create Users in AAD
+#   import_playbook: 07.create-users.yaml
+
+# - name: Add RBAC to users
+#   import_playbook: 08.rbac-setup.yml
+
+- name: Create Azure Container registry
+  import_playbook: 09.create-acr.yml
+
+- name: Attach ACR to AKS
+  import_playbook: 10.acr-attach-to-aks.yml
+
+- name: CI - Pull project, created image, push to ACR
+  import_playbook: 13.pull-project.yml
+
+- name: CD - Helm Install Microservice
+  import_playbook: 14.helm-install-microservices.yml

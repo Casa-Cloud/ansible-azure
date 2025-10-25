@@ -40,12 +40,12 @@
     az aks show \
     --resource-group {{ cloud_element.group_name }} \
     --name {{ cloud_element.name }} \
-    --query "identityProfile.kubeletidentity.clientId" \
+    --query "identityProfile.kubeletidentity.objectId" \
     --output tsv
   register: aks_kubelet_identity_client_id
 
 # Print ACR ID - in the role
-- name: "Print {{ cloud_element.name  }} identityProfile.kubeletidentity.clientId inside role" 
+- name: "Print {{ cloud_element.name  }} identityProfile.kubeletidentity.objectId inside role" 
   ansible.builtin.debug:
     var: aks_kubelet_identity_client_id.stdout
 

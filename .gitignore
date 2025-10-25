@@ -1,2 +1,8 @@
 01-aks_create/certificate
+02-aks_create_with_ansible_galaxy/certificate
 editor.sh
+# Ignore all Galaxy-installed collections (any depth)
+**/collections/*
+
+# Keep the installer manifest(s)
+!**/collections/requirements.yml

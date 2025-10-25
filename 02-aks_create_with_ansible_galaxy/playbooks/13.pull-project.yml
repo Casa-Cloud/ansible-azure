@@ -1,0 +1,130 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+- name: Check if Git is installed
+  hosts: all
+  tasks:
+    - name: Include Azure factory global main variables 
+      include_vars: "{{ playbook_dir }}/../vars/global-main.yml"
+
+    - name: Include Azure factory regional main variables 
+      include_vars: "{{ playbook_dir }}/../vars/{{ stage }}/region-main.yml"
+
+    - name: Check if git is available
+      ansible.builtin.import_role:
+        name: check_git_availabe_001
+      vars:
+        ansible_facts_output_var: "git_availabe_out"
+    - name: ansible_facts.git_availabe_out
+      ansible.builtin.debug:
+        var: ansible_facts.git_availabe_out
+
+    - name: Set a local variable
+      set_fact:
+        localFolderName: "{{ lookup('env','PWD') }}/{{ ms.ms1.localFolderToCloneSuffix.name }}_{{ ansible_date_time.epoch }}"
+
+    - name: localFolderName
+      ansible.builtin.debug:
+        var: localFolderName
+
+    - name: Create temporary folder for cloning repository
+      ansible.builtin.import_role:
+        name: create_folder_001
+      vars:
+        cloud_element:
+          path: "{{ localFolderName }}"
+          mode: "{{ms.ms1.localFolderToCloneSuffix.mode}}"
+        ansible_facts_output_var: "folder1_created_out"
+    - name: ansible_facts.folder1_created_out
+      ansible.builtin.debug:
+        var: ansible_facts.folder1_created_out
+
+    - name: Git Clone
+      ansible.builtin.import_role:
+        name: git_clone_001
+      vars:
+        cloud_element:
+          repo: "{{ ms.ms1.github_repo_url }}"
+          dest: "{{ localFolderName }}"
+        ansible_facts_output_var: "git_clone_out"
+    - name: ansible_facts.git_clone_out
+      ansible.builtin.debug:
+        var: ansible_facts.git_clone_out
+
+    - name: Check if docker is available
+      ansible.builtin.import_role:
+        name: check_docker_available_001
+      vars:
+        ansible_facts_output_var: "docker_availabe_out"
+    - name: ansible_facts.docker_availabe_out
+      ansible.builtin.debug:
+        var: ansible_facts.docker_availabe_out
+
+    - name: build docker image for linux/amd64
+      ansible.builtin.import_role:
+        name: build_image_001
+      vars:
+        cloud_element:
+          container_registry: "{{ container_registry.container_registry_1.name }}.azurecr.io/"
+          imageName: "{{ ms.ms1.docker_image_name }}"
+          version: "{{ ms.ms1.docker_image_version }}"
+          repoFolderPath: "{{ localFolderName }}"
+        ansible_facts_output_var: "ms1_build_out"
+    - name: ansible_facts.ms1_build_out
+      ansible.builtin.debug:
+        var: ansible_facts.ms1_build_out
+
+    - name: Login to Azure Container Registry
+      ansible.builtin.import_role:
+        name: login_azure_container_registry_001
+      vars:
+        cloud_element:
+          containerRegistryName: "{{ container_registry.container_registry_1.name }}"
+        ansible_facts_output_var: "acr_login_out"
+    - name: ansible_facts.acr_login_out
+      ansible.builtin.debug:
+        var: ansible_facts.acr_login_out
+
+    - name: Push docker image to ACR
+      ansible.builtin.import_role:
+        name: push_image_001
+      vars:
+        cloud_element:
+          container_registry: "{{ container_registry.container_registry_1.name }}.azurecr.io/"
+          imageName: "{{ ms.ms1.docker_image_name }}"
+          version: "{{ ms.ms1.docker_image_version }}"
+        ansible_facts_output_var: "docker_push_out"
+    - name: ansible_facts.docker_push_out
+      ansible.builtin.debug:
+        var: ansible_facts.docker_push_out
+
+    - name: Remove docker image from local
+      ansible.builtin.import_role:
+        name: remove_image_from_local_001
+      vars:
+        cloud_element:
+          container_registry: "{{ container_registry.container_registry_1.name }}.azurecr.io/"
+          imageName: "{{ ms.ms1.docker_image_name }}"
+          version: "{{ ms.ms1.docker_image_version }}"
+        ansible_facts_output_var: "docker_rmi_out"
+    - name: ansible_facts.docker_rmi_out
+      ansible.builtin.debug:
+        var: ansible_facts.docker_rmi_out
+    
+    - name: Remove folder from local 
+      ansible.builtin.import_role:
+        name: remove_folder_001
+      vars:
+        cloud_element:
+          localFolderName: "{{ localFolderName }}"
+        ansible_facts_output_var: "folder_removed_out"
+    - name: ansible_facts.folder_removed_out
+      ansible.builtin.debug:
+        var: ansible_facts.folder_removed_out
+

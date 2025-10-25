@@ -7,7 +7,7 @@
 # ------------------------------------------------------------------------------
 
 regionalVariables:
-  subscription_id: b63a40da-5629-452a-9350-e48460eae13f
+  subscription_id: 3f9865ad-7775-47bb-ba40-18f30d2bb648
   location: eastus2
   region_number: "01"
   id: d1
@@ -16,7 +16,7 @@ regionalVariables:
 identities: 
   spn:
     app01:
-      appid: e6503702-ec3a-4266-90a5-d742273f5797 # Important! Replace your service ID here to login to azure.
+      appid: f584d2bc-2f90-4347-9104-af952f2c59af # Important! Replace your service ID here to login to azure.
       certificateName: service-principal.pem
 resourcegroup:
   resource_group_1:

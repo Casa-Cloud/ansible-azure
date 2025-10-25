@@ -1,0 +1,33 @@
+{
+    "azure_login_result": [
+        {
+            "cloudName": "AzureCloud",
+            "homeTenantId": "b97afa8a-53d0-4f83-a528-3af72fd81f45",
+            "id": "3f9865ad-7775-47bb-ba40-18f30d2bb648",
+            "isDefault": true,
+            "managedByTenants": [],
+            "name": "Visual Studio Enterprise Subscription",
+            "state": "Enabled",
+            "tenantId": "b97afa8a-53d0-4f83-a528-3af72fd81f45",
+            "user": {
+                "name": "f584d2bc-2f90-4347-9104-af952f2c59af",
+                "type": "servicePrincipal"
+            }
+        }
+    ],
+    "discovered_interpreter_python": "/opt/homebrew/bin/python3.13",
+    "rg_deleted": true,
+    "rg_details_if_exists_fact": [
+        {
+            "id": "/subscriptions/3f9865ad-7775-47bb-ba40-18f30d2bb648/resourceGroups/NetworkWatcherRG",
+            "location": "eastus",
+            "managedBy": null,
+            "name": "NetworkWatcherRG",
+            "properties": {
+                "provisioningState": "Succeeded"
+            },
+            "tags": null,
+            "type": "Microsoft.Resources/resourceGroups"
+        }
+    ]
+}

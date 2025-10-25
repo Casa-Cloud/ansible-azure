@@ -1,0 +1,102 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+- name: task_element
+  ansible.builtin.debug:
+    var: task_element
+
+- name: "Check Mandatory Variables are defined cr-attach-to-aks_task.yml"
+  ansible.builtin.assert:
+    that:
+      - task_element is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role.
+
+
+
+- name: Assert mandatory variables in clound_element
+  ansible.builtin.assert:
+    that:
+    - task_element.acr_name is defined
+    - task_element.group_name is defined
+    - task_element.aks_name is defined
+    success_msg: All mandatory variables for this task are present
+    fail_msg: Missing mandatory variable(s) for this task
+
+    # Get Azure Container Registry id
+- name: "Get Azure Container Registry id"
+  ansible.builtin.import_role:
+    name: get_azure_container_registry_id_001
+  vars: 
+    cloud_element:
+      name: "{{ task_element.acr_name }}"
+      group_name: "{{ task_element.group_name }}"
+    ansible_facts_output_var: "container_registry_1_id_out"
+    
+# Print ACR ID
+- name: "Print {{ container_registry.container_registry_1.name }} id" 
+  ansible.builtin.debug:
+    var: ansible_facts.container_registry_1_id_out
+
+# Print AKS name
+- name: "Print AKS name" 
+  ansible.builtin.debug:
+    var: task_element.aks_name
+  
+# Get AKS kubelet identity clientid
+- name: Get AKS kubelet identity clientid
+  ansible.builtin.import_role:
+    name: get_aks_kubelet_identity_clientid_001
+  vars: 
+    cloud_element:
+      name: "{{ task_element.aks_name }}"
+      group_name: "{{ task_element.group_name }}"
+    ansible_facts_output_var: "aks_kubelet_identity_clientid_1_out"
+
+# Print AKS kubelet identity clientid
+- name: "Print {{ task_element.aks_name }} kubelet identity clientid" 
+  ansible.builtin.debug:
+    var: ansible_facts.aks_kubelet_identity_clientid_1_out
+
+# Assign RBAC AcrPull to Aks kubelet clientID
+- name: assign RBAC AcrPull to Aks kubelet clientID 
+  ansible.builtin.import_role:
+    name: assign_rbac_001
+  vars:
+    cloud_element:
+      user_principal_name: "{{ ansible_facts.aks_kubelet_identity_clientid_1_out }}"
+      role: "AcrPull"
+      scope: "{{ ansible_facts.container_registry_1_id_out }}"
+    ansible_facts_output_var: "{{ task_element.aks_name }}_kubelet_rbac_assignment_out"
+    
+# Print AKS name
+- name: "AKS kubelet RBAC assignment output"
+  ansible.builtin.debug:
+    var: "{{ task_element.aks_name }}_kubelet_rbac_assignment_out"
+
+# Check AKS access to ACR
+- name: Check AKS access to ACR
+  ansible.builtin.import_role:
+    name: check_aks_access_to_acr_001
+  vars:
+    cloud_element:
+      name: "{{ task_element.aks_name }}"
+      group_name: "{{ task_element.group_name }}"
+      acr_name: "{{ task_element.acr_name }}"
+    ansible_facts_output_var: "{{ task_element.aks_name }}_ACCESS_to_acr_out"
+    
+# Print AKS access to ACR
+- name: "AKS kubelet RBAC assignment output"
+  ansible.builtin.debug:
+    var: "{{ task_element.aks_name }}_ACCESS_to_acr_out"
+
+- name: Fail if ACR Access is unsuccessful
+  ansible.builtin.fail:
+    msg: "ACR Access validation failed for {{ task_element.aks_name }}!"
+  when: not vars[task_element.aks_name + '_ACCESS_to_acr_out']

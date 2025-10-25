@@ -1,0 +1,45 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+---
+- name: "Check Mandatory Variables are defined assign-rbac_loop_users_task.yaml"
+  ansible.builtin.assert:
+    that:
+      - user_item is defined
+    success_msg: All madatory variables for this role are defined
+    fail_msg: Missing mandatory variable(s) to execute the role.
+
+- name: user_item - assign-rbac.yaml
+  ansible.builtin.debug:
+    var: user_item
+
+- name: Check User {{ user_item.value.user_principal_name }} Exist
+  ansible.builtin.import_role:
+    name: get_user_details_001
+  vars:
+    cloud_element:
+      id: "{{ user_item.value.user_principal_name }}"
+    ansible_facts_output_var: "{{ user_item.value.mail_nickname }}_out"
+  ignore_errors: true
+
+- name: "{{ user_item.value.user_principal_name }}_out cassign-rbac" 
+  ansible.builtin.debug:
+    var: ansible_facts[user_item.value.mail_nickname + '_out']
+
+- name: "Loop through users and setup rbac for each user"
+  ansible.builtin.include_tasks: ../tasks/rbac/assign-rbac_loop_roles_task.yaml
+  loop: "{{ user_item.value.rbac }}"
+  loop_control:
+    loop_var: rbac_item
+  vars: 
+    user_principal_name: "{{ user_item.value.user_principal_name }}"
+    mail_nickname: "{{ user_item.value.mail_nickname }}"
+  when: 
+    - "'rbac' in user_item.value"
+    - ansible_facts[user_item.value.mail_nickname + '_out'].failed==false
+    - ansible_facts[user_item.value.mail_nickname + '_out'].rc == 0

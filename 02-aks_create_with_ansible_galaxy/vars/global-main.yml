@@ -1,0 +1,10 @@
+# ------------------------------------------------------------------------------
+# Owner: Alok Adhao
+# Repository: https://github.com/Casa-Cloud
+# Description: This file is part of the Casa-Cloud project ansible-azure
+# Created: 2025-04-13
+# License: MIT
+# ------------------------------------------------------------------------------
+
+globalvariables:
+  tenant_id: b97afa8a-53d0-4f83-a528-3af72fd81f45

@@ -40,6 +40,7 @@
     - cloud_element.vnet_subnet_id is defined
     - cloud_element.log_workspace_resource_id is defined
     - cloud_element.data_collection_settings is defined
+    - cloud_element.ssh_key_id_rsa_pub is defined
     # - cloud_element.monitor_workspace_resource_id is defined
     success_msg: All mandatory variables for this role are present
     fail_msg: Missing mandatory variable(s) for this role
@@ -73,8 +74,8 @@
     --workspace-resource-id {{ cloud_element.log_workspace_resource_id }} \
     --enable-addons monitoring \
     --disable-local-accounts \
-    --data-collection-settings {{ role_path }}/files{{ cloud_element.data_collection_settings }}
-    --ssh-key-value ~/.ssh/id_rsa.pub
+    --data-collection-settings {{ role_path }}/files{{ cloud_element.data_collection_settings }} \
+    --ssh-key-value "{{ cloud_element.ssh_key_id_rsa_pub }}"
   register: aks_created
   when: aks_exists.failed
   # --data-collection-settings {{ role_path }}/files{{ cloud_element.data_collection_settings }}
